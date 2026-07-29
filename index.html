@@ -3,154 +3,292 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Garden Grower 🌻</title>
+<title>Garden Grower</title>
 <style>
-  /* ---------- Theme & resets ---------- */
+  /* ---------- Resets & theme ---------- */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --sky: #bde0fe;
-    --grass: #a7e8a3;
-    --soil: #c08552;
-    --panel: #fff8e7;
-    --accent: #ff9f1c;
-    --good: #2ec4b6;
-    --bad: #e63946;
-    --text: #2b2d42;
+    --good: #6fdc8f;
+    --bad: #ef6e6e;
+    --text: #5a4a6a;
+    --glass: rgba(255,255,255,0.45);
+    --glass-strong: rgba(255,255,255,0.62);
+    --glass-border: rgba(255,255,255,0.7);
+    --gold: #ffd36e;
+    --font: "Comic Sans MS", "Chalkboard SE", "Comic Neue", -apple-system, system-ui, sans-serif;
   }
-  html, body { height: 100%; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; color: var(--text); }
+  html, body { height: 100%; font-family: var(--font); color: var(--text); }
   body {
-    background: linear-gradient(180deg, var(--sky) 0%, #d8f3ff 35%, var(--grass) 65%, #8fd982 100%);
-    overflow: hidden;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
+    overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+
+  /* ---------- Animated sky ---------- */
+  #sky {
+    position: fixed; inset: 0; z-index: -3;
+    background: linear-gradient(160deg, #ffd9ec 0%, #d9c2ff 28%, #b5d4ff 55%, #ffe9c2 82%, #ffc59e 100%);
+    background-size: 300% 300%;
+    animation: skyShift 30s ease-in-out infinite;
+  }
+  @keyframes skyShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  /* Soft sun glow in corner */
+  #sun {
+    position: fixed; top: -60px; right: -40px; width: 220px; height: 220px; z-index: -2;
+    background: radial-gradient(circle, rgba(255,235,180,0.95), rgba(255,210,150,0.4) 55%, transparent 72%);
+    border-radius: 50%; filter: blur(2px); animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{ transform: scale(1); opacity:.9 } 50%{ transform: scale(1.08); opacity:1 } }
+  /* Drifting clouds */
+  .cloud {
+    position: fixed; z-index: -2; opacity: .5; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, rgba(255,255,255,.9), rgba(255,255,255,.35) 60%, transparent 75%);
+    filter: blur(6px);
+  }
+
+  /* ---------- Floating particles ---------- */
+  #particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+  .spark {
+    position: absolute; width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, rgba(255,240,200,.9) 40%, transparent 70%);
+    box-shadow: 0 0 8px 2px rgba(255,230,180,.6);
+    animation: drift linear infinite;
+  }
+  .petal {
+    position: absolute; width: 10px; height: 10px; border-radius: 50% 0 50% 0;
+    background: linear-gradient(135deg, #ffd0e0, #ff9bbf); opacity: .7;
+    animation: drift linear infinite;
+  }
+  @keyframes drift {
+    0%   { transform: translate(0,0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translate(var(--dx,80px), -120vh) rotate(360deg); opacity: 0; }
   }
 
   /* ---------- Layout ---------- */
-  #app { display: flex; flex-direction: column; height: 100%; padding: 10px; gap: 10px; }
+  #app { display: flex; flex-direction: column; height: 100%; padding: 12px; gap: 12px; position: relative; z-index: 1; }
 
-  /* Top bar */
+  /* ---------- Top bar (glass pill) ---------- */
   #topbar {
     display: flex; align-items: center; justify-content: space-between;
-    background: var(--panel); border-radius: 18px; padding: 10px 18px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+    background: var(--glass-strong); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border: 1.5px solid var(--glass-border); border-radius: 22px; padding: 8px 16px;
+    box-shadow: 0 6px 22px rgba(150,110,180,0.18), inset 0 1px 0 rgba(255,255,255,.7);
     flex-shrink: 0;
   }
-  #title { font-size: 1.6rem; font-weight: 800; }
-  .stat {
-    background: white; border-radius: 14px; padding: 6px 14px; font-weight: 700;
-    display: flex; align-items: center; gap: 6px; min-height: 44px;
-  }
+  #title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 6px; color: #7a5e9c; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  #title svg { width: 30px; height: 30px; }
   #stats { display: flex; gap: 8px; flex-wrap: wrap; }
-  #muteBtn { font-size: 1.4rem; background: white; border: none; border-radius: 14px; padding: 6px 12px; min-height: 44px; cursor: pointer; }
+  .stat {
+    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.65);
+    border-radius: 16px; padding: 6px 12px; font-weight: 700; font-size: .95rem;
+    display: flex; align-items: center; gap: 5px; min-height: 40px;
+    box-shadow: 0 2px 8px rgba(150,110,180,0.12);
+  }
+  .stat svg { width: 20px; height: 20px; flex-shrink: 0; }
+  #muteBtn {
+    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.65);
+    border-radius: 50%; width: 42px; height: 42px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(150,110,180,0.12); transition: transform .15s;
+  }
+  #muteBtn:active { transform: scale(0.9); }
+  #muteBtn svg { width: 22px; height: 22px; }
 
-  /* Main area: garden + question */
-  #main { display: flex; flex: 1; gap: 12px; min-height: 0; }
+  /* ---------- Main area ---------- */
+  #main { display: flex; flex: 1; gap: 14px; min-height: 0; }
 
-  /* Garden */
+  /* ---------- Garden with 3D perspective ---------- */
   #gardenWrap {
-    flex: 0 0 58%; background: rgba(255,255,255,0.45); border-radius: 22px; padding: 12px;
-    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.6);
-    display: flex; flex-direction: column; gap: 8px;
+    flex: 0 0 56%; display: flex; flex-direction: column; gap: 10px; min-height: 0;
+  }
+  #gardenStage {
+    flex: 1; position: relative; border-radius: 26px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(255,210,170,0.25), rgba(200,160,120,0.15));
+    border: 1.5px solid rgba(255,255,255,0.6);
+    box-shadow: 0 10px 30px rgba(150,110,180,0.2), inset 0 0 0 1px rgba(255,255,255,.3);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  }
+  /* wooden fence at back edge */
+  #fence {
+    position: absolute; top: 0; left: 0; right: 0; height: 18px; z-index: 2;
+    background: repeating-linear-gradient(90deg, #c89a5e 0 14px, #a87a3e 14px 16px);
+    border-bottom: 3px solid #8a6230;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
   #garden {
-    flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr);
-    gap: 10px; min-height: 0;
+    position: absolute; top: 22px; left: 3%; right: 3%; bottom: 3%;
+    perspective: 800px; perspective-origin: 50% 0%;
+  }
+  .garden-plane {
+    width: 100%; height: 100%; display: grid;
+    grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr);
+    gap: 14px; transform: rotateX(38deg); transform-origin: 50% 0%;
+    transform-style: preserve-3d;
   }
   .slot {
-    background: var(--soil); border-radius: 16px; display: flex; align-items: center; justify-content: center;
-    font-size: clamp(2rem, 6vw, 3.5rem); transition: transform .3s, box-shadow .3s, background .3s;
-    box-shadow: inset 0 -6px 0 rgba(0,0,0,0.18), inset 0 4px 0 rgba(255,255,255,0.25);
-    position: relative; overflow: hidden;
+    position: relative; display: flex; align-items: center; justify-content: center;
+    border-radius: 14px;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(120,80,50,.55), rgba(90,58,32,.85) 70%),
+      linear-gradient(180deg, #6b4a2a, #5a3c22);
+    box-shadow: inset 0 6px 10px rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.25);
+    transition: box-shadow .3s, transform .3s;
   }
-  .slot .plant { display: inline-block; transition: transform .35s cubic-bezier(.34,1.56,.64,1); }
+  /* row depth scaling */
+  .garden-plane .slot:nth-child(-n+4)        { transform: scale(.78); }
+  .garden-plane .slot:nth-child(n+5):nth-child(-n+8) { transform: scale(.88); }
+  .garden-plane .slot:nth-child(n+9)        { transform: scale(1); }
+  .slot .plant { width: 86%; height: 86%; display: flex; align-items: center; justify-content: center; transform-origin: 50% 100%; }
+  .slot .plant svg { width: 100%; height: 100%; }
   .slot.active {
-    box-shadow: inset 0 0 0 5px var(--accent), inset 0 -6px 0 rgba(0,0,0,0.18);
-    transform: scale(1.03);
+    box-shadow: inset 0 0 0 4px var(--gold), inset 0 6px 12px rgba(255,255,255,.2), 0 0 22px 4px rgba(255,210,120,.7), 0 2px 6px rgba(0,0,0,.25);
+    animation: activeGlow 1.8s ease-in-out infinite;
   }
-  .slot.grown { background: #9bcf6b; }
-  .slot.wilt { animation: wilt .6s ease; }
-  @keyframes wilt { 0%{transform:scale(1)} 30%{transform:scale(.85) rotate(-8deg)} 100%{transform:scale(1)} }
-  .slot.pop .plant { animation: pop .4s cubic-bezier(.34,1.56,.64,1); }
-  @keyframes pop { 0%{transform:scale(.4)} 100%{transform:scale(1)} }
+  @keyframes activeGlow { 0%,100%{ box-shadow: inset 0 0 0 4px var(--gold), 0 0 16px 3px rgba(255,210,120,.55), 0 2px 6px rgba(0,0,0,.25) } 50%{ box-shadow: inset 0 0 0 4px var(--gold), 0 0 28px 6px rgba(255,220,140,.85), 0 2px 6px rgba(0,0,0,.25) } }
+  .slot.grown { background: radial-gradient(ellipse at 50% 30%, #8fbf6a, #6fa44a 70%); }
+  .slot.wilt .plant { animation: wilt .6s ease; }
+  @keyframes wilt { 0%{transform:scale(1) rotate(0)} 30%{transform:scale(.9) rotate(-10deg) translateY(4px)} 100%{transform:scale(1) rotate(0)} }
+  .slot.pop .plant { animation: growIn .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes growIn { 0%{transform:scale(.3) translateY(10px); opacity:.3} 100%{transform:scale(1) translateY(0); opacity:1} }
+  .slot .burst { position: absolute; inset: 0; pointer-events: none; }
+  .burst span {
+    position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle, #fff, rgba(255,220,140,.9) 50%, transparent 70%);
+    box-shadow: 0 0 8px 2px rgba(255,230,160,.8);
+    animation: burstOut .6s ease-out forwards;
+  }
+  @keyframes burstOut { 0%{ transform: translate(-50%,-50%) scale(.5); opacity:1 } 100%{ transform: translate(calc(-50% + var(--bx)), calc(-50% + var(--by))) scale(0); opacity:0 } }
 
   /* Cut button */
   #cutBtn {
-    flex-shrink: 0; align-self: flex-end; font-size: 1.2rem; font-weight: 800;
-    background: var(--accent); color: white; border: none; border-radius: 16px;
-    padding: 12px 20px; min-height: 56px; cursor: pointer; box-shadow: 0 4px 0 #c77a00;
+    flex-shrink: 0; align-self: flex-end; font-size: 1.1rem; font-weight: 800; color: #fff;
+    background: linear-gradient(180deg, #ff9f6e, #f47b4a); border: none; border-radius: 18px;
+    padding: 11px 20px; min-height: 50px; cursor: pointer;
+    box-shadow: 0 5px 0 #c95428, 0 8px 14px rgba(244,123,74,.4); transition: transform .1s, box-shadow .1s;
+    display: flex; align-items: center; gap: 7px;
   }
-  #cutBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #c77a00; }
+  #cutBtn:active { transform: translateY(3px); box-shadow: 0 2px 0 #c95428; }
+  #cutBtn svg { width: 20px; height: 20px; }
 
-  /* Question panel */
+  /* ---------- Question panel (glassmorphism) ---------- */
   #panel {
-    flex: 1; background: var(--panel); border-radius: 22px; padding: 16px;
-    display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 0 rgba(0,0,0,0.08);
-    min-height: 0;
+    flex: 1; min-width: 0; min-height: 0;
+    background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border: 1.5px solid var(--glass-border); border-radius: 26px; padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+    box-shadow: 0 10px 30px rgba(150,110,180,0.18), inset 0 1px 0 rgba(255,255,255,.7);
   }
   #question {
-    text-align: center; font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800;
-    background: white; border-radius: 18px; padding: 14px; min-height: 90px;
+    text-align: center; font-size: clamp(2rem, 5.5vw, 3rem); font-weight: 800; color: #6a4f8a;
+    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 20px; padding: 16px; min-height: 90px;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: inset 0 0 0 3px #ffe08a;
-    transition: transform .3s, background .3s;
+    text-shadow: 0 1px 0 rgba(255,255,255,.7), 0 0 18px rgba(255,210,140,.4);
+    box-shadow: inset 0 0 0 2px rgba(255,230,180,.5);
+    transition: background .3s, transform .3s;
   }
-  #question.flash-good { background: #d6f5e8; }
-  #question.flash-bad  { background: #fcd7d7; animation: shake .4s; }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  #question.flash-good { background: rgba(180,240,200,.7); }
+  #question.flash-bad  { background: rgba(255,200,200,.7); animation: shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
 
-  #answers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; min-height: 0; }
+  #answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; min-height: 0; }
   .answer {
-    font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; color: white; border: none;
-    border-radius: 18px; min-height: 64px; cursor: pointer;
-    box-shadow: 0 5px 0 rgba(0,0,0,0.18); transition: transform .1s, box-shadow .1s, background .3s;
+    font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; color: #fff; border: none;
+    border-radius: 20px; min-height: 64px; cursor: pointer; position: relative; overflow: hidden;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.16), 0 8px 18px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,.4);
+    transition: transform .1s, box-shadow .1s, background .3s;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.18);
   }
-  .answer:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.18); }
-  .answer:nth-child(1){background:#ef476f}.answer:nth-child(2){background:#118ab2}
-  .answer:nth-child(3){background:#06d6a0}.answer:nth-child(4){background:#ffd166}
-  .answer.correct { background: var(--good) !important; }
-  .answer.wrong   { background: var(--bad) !important; }
+  .answer::after {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 45%;
+    background: linear-gradient(180deg, rgba(255,255,255,.35), transparent);
+    border-radius: 20px 20px 0 0; pointer-events: none;
+  }
+  .answer:active { transform: translateY(3px) scale(.98); box-shadow: 0 3px 0 rgba(0,0,0,0.16); }
+  .answer:nth-child(1){ background: linear-gradient(180deg, #ff8fab, #f76b9d); }
+  .answer:nth-child(2){ background: linear-gradient(180deg, #84d2ff, #4aa8e6); }
+  .answer:nth-child(3){ background: linear-gradient(180deg, #9be7a0, #5fc56b); }
+  .answer:nth-child(4){ background: linear-gradient(180deg, #ffd97e, #f5b94a); }
+  .answer.correct { background: linear-gradient(180deg, #8fe6a6, #4ec96a) !important; box-shadow: 0 0 24px 6px rgba(120,240,150,.7), 0 6px 0 rgba(0,0,0,.16); }
+  .answer.wrong   { background: linear-gradient(180deg, #ff9999, #ef6e6e) !important; animation: shake .4s; }
   .answer:disabled { opacity: .55; }
 
-  /* Banner for level up */
+  /* ---------- Level-up banner ---------- */
   #banner {
     position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.35); z-index: 50;
+    background: rgba(90,60,120,0.35); z-index: 50; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
   }
-  #banner .box {
-    background: var(--panel); border-radius: 24px; padding: 30px 40px; text-align: center;
-    box-shadow: 0 8px 0 rgba(0,0,0,0.15); animation: pop .5s;
+  #banner.show { display: flex; }
+  .banner-box {
+    position: relative; text-align: center; animation: bannerPop .6s cubic-bezier(.34,1.56,.64,1);
   }
-  #banner h2 { font-size: 2.4rem; }
-  #banner p { font-size: 1.4rem; margin-top: 8px; }
+  @keyframes bannerPop { 0%{transform:scale(.3); opacity:0} 100%{transform:scale(1); opacity:1} }
+  .banner-ring {
+    position: absolute; left: 50%; top: 50%; border: 4px solid var(--gold); border-radius: 50%;
+    transform: translate(-50%,-50%); pointer-events: none;
+    animation: ringExpand 1s ease-out;
+  }
+  @keyframes ringExpand { 0%{ width:0; height:0; opacity:1 } 100%{ width:340px; height:340px; opacity:0 } }
+  .banner-spark {
+    position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; border-radius: 50%;
+    background: radial-gradient(circle, #fff, rgba(255,220,140,.9) 50%, transparent 70%);
+    box-shadow: 0 0 10px 3px rgba(255,230,160,.9);
+    animation: sparkOut .9s ease-out forwards;
+  }
+  @keyframes sparkOut { 0%{ transform: translate(-50%,-50%) scale(1); opacity:1 } 100%{ transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(0); opacity:0 } }
+  #bannerTitle { font-size: clamp(2.4rem, 7vw, 3.6rem); font-weight: 800; color: #fff;
+    text-shadow: 0 0 20px rgba(255,210,120,.9), 0 0 40px rgba(255,180,80,.6), 0 3px 0 rgba(180,120,40,.5); }
+  #bannerSub { font-size: clamp(1.1rem, 3vw, 1.4rem); margin-top: 8px; color: #fff; text-shadow: 0 0 12px rgba(255,210,120,.7); }
 
   /* ---------- Responsive ---------- */
   @media (max-width: 700px) {
     #main { flex-direction: column; }
-    #gardenWrap { flex: 0 0 auto; height: 42%; }
+    #gardenWrap { flex: 0 0 auto; height: 44%; flex: 1 1 44%; }
     #panel { flex: 1; }
-    #garden { grid-template-rows: repeat(3, 1fr); }
-    #title { font-size: 1.2rem; }
+    #title { font-size: 1.15rem; }
+    #title svg { width: 24px; height: 24px; }
+    .stat { font-size: .82rem; padding: 5px 9px; }
+    .garden-plane { gap: 8px; }
   }
 </style>
 </head>
 <body>
+<div id="sky"></div>
+<div id="sun"></div>
+<div class="cloud" style="width:180px;height:70px;top:12%;left:8%;animation:drift 40s linear infinite;--dx:60vw"></div>
+<div class="cloud" style="width:140px;height:55px;top:28%;left:55%;animation:drift 55s linear infinite;--dx:-50vw;animation-delay:-15s"></div>
+<div class="cloud" style="width:200px;height:80px;top:6%;left:70%;animation:drift 70s linear infinite;--dx:-80vw;animation-delay:-30s"></div>
+<div id="particles"></div>
+
 <div id="app">
-  <!-- Top bar: title + stats + mute -->
   <div id="topbar">
-    <div id="title">🌻 Garden Grower</div>
-    <div id="stats">
-      <div class="stat" id="levelStat">🪴 Level 1</div>
-      <div class="stat" id="streakStat">🔥 Streak 0</div>
-      <div class="stat" id="grownStat">🌷 Grown 0</div>
+    <div id="title">
+      <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="6" fill="#7a5a2e"/><g fill="#ffd36e"><ellipse cx="16" cy="5" rx="4" ry="6"/><ellipse cx="27" cy="16" rx="6" ry="4"/><ellipse cx="16" cy="27" rx="4" ry="6"/><ellipse cx="5" cy="16" rx="6" ry="4"/><ellipse cx="23.5" cy="8.5" rx="4" ry="5.5" transform="rotate(45 23.5 8.5)"/><ellipse cx="8.5" cy="8.5" rx="4" ry="5.5" transform="rotate(-45 8.5 8.5)"/><ellipse cx="23.5" cy="23.5" rx="4" ry="5.5" transform="rotate(-45 23.5 23.5)"/><ellipse cx="8.5" cy="23.5" rx="4" ry="5.5" transform="rotate(45 8.5 23.5)"/></g><circle cx="16" cy="16" r="4.5" fill="#8a6a32"/></svg>
+      Garden Grower
     </div>
-    <button id="muteBtn" title="Mute">🔊</button>
+    <div id="stats">
+      <div class="stat" id="levelStat"></div>
+      <div class="stat" id="streakStat"></div>
+      <div class="stat" id="grownStat"></div>
+    </div>
+    <button id="muteBtn" title="Mute"></button>
   </div>
 
-  <!-- Main: garden + question panel -->
   <div id="main">
     <div id="gardenWrap">
-      <div id="garden"></div>
-      <button id="cutBtn">✂️ Cut Garden</button>
+      <div id="gardenStage">
+        <div id="fence"></div>
+        <div id="garden"><div class="garden-plane" id="gardenPlane"></div></div>
+      </div>
+      <button id="cutBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+        Cut Garden
+      </button>
     </div>
 
     <div id="panel">
@@ -160,33 +298,228 @@
   </div>
 </div>
 
-<!-- Level-up banner -->
-<div id="banner"><div class="box"><h2 id="bannerTitle">Level Up! 🎉</h2><p id="bannerSub">New garden, harder problems!</p></div></div>
+<div id="banner"><div class="banner-box"><h2 id="bannerTitle"></h2><p id="bannerSub"></p></div></div>
 
 <script>
 "use strict";
 /* ============================================================
-   Garden Grower — single-file math game
+   Garden Grower — single-file math game (dreamy visual overhaul)
    ============================================================ */
 
 const STORAGE_KEY = "gardenGrower";
 const NUM_SLOTS = 12;
-const STAGES = ["🟫", "🌱", "🌿", null]; // index 3 = fully grown plant (random)
-const PLANTS = ["🌷", "🍅", "🌻", "🍓", "🥕", "🌽", "🍆", "🫐", "🍉"];
 const MAX_STAGE = 3; // stage 0..2 growing, 3 = grown
+const PLANT_TYPES = ["sunflower", "tulip", "strawberry", "carrot", "tomato"];
 
-// ---------- State ----------
+/* ---------- SVG plant library ---------- */
+/* Each plant: function(stage 0..3) returns SVG string (80x80 viewBox) */
+
+function svgSoil(extra) {
+  // Stage 0 — soil mound with tiny seed crack
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="58" rx="30" ry="10" fill="#5a3c22" opacity="0.5"/>
+    <path d="M14 54 Q40 40 66 54 L66 60 Q40 50 14 60 Z" fill="#4a3018"/>
+    <path d="M36 50 L40 56 L44 50" stroke="#3a2410" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${extra||""}
+  </svg>`;
+}
+
+function plantSVG(type, stage) {
+  if (stage <= 0) return svgSoil();
+  if (type === "sunflower") return sunflowerSVG(stage);
+  if (type === "tulip") return tulipSVG(stage);
+  if (type === "strawberry") return strawberrySVG(stage);
+  if (type === "carrot") return carrotSVG(stage);
+  if (type === "tomato") return tomatoSVG(stage);
+  return sunflowerSVG(stage);
+}
+
+/* --- Sunflower --- */
+function sunflowerSVG(s) {
+  if (s === 1) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 58 L40 38" stroke="#5fae3e" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="33" cy="36" rx="6" ry="4" fill="#7fd45a" transform="rotate(-30 33 36)"/>
+    <ellipse cx="47" cy="36" rx="6" ry="4" fill="#7fd45a" transform="rotate(30 47 36)"/>
+  </svg>`;
+  if (s === 2) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 62 L40 22" stroke="#5fae3e" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="28" cy="44" rx="9" ry="5" fill="#7fd45a" transform="rotate(-25 28 44)"/>
+    <ellipse cx="52" cy="44" rx="9" ry="5" fill="#7fd45a" transform="rotate(25 52 44)"/>
+    <ellipse cx="30" cy="30" rx="7" ry="4" fill="#8fe06a" transform="rotate(-40 30 30)"/>
+    <circle cx="40" cy="18" r="6" fill="#7fd45a"/>
+    <circle cx="40" cy="18" r="3.5" fill="#6fc04a"/>
+  </svg>`;
+  // s === 3 mature
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 66 L40 28" stroke="#5fae3e" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="26" cy="48" rx="10" ry="6" fill="#7fd45a" transform="rotate(-25 26 48)"/>
+    <ellipse cx="54" cy="48" rx="10" ry="6" fill="#7fd45a" transform="rotate(25 54 48)"/>
+    <ellipse cx="28" cy="34" rx="8" ry="5" fill="#8fe06a" transform="rotate(-45 28 34)"/>
+    <ellipse cx="52" cy="34" rx="8" ry="5" fill="#8fe06a" transform="rotate(45 52 34)"/>
+    <g transform="translate(40 22)">
+      <g fill="#ffd23f"><ellipse cx="0" cy="-14" rx="5" ry="9"/><ellipse cx="10" cy="-10" rx="5" ry="9" transform="rotate(45)"/><ellipse cx="14" cy="0" rx="9" ry="5"/><ellipse cx="10" cy="10" rx="5" ry="9" transform="rotate(135)"/><ellipse cx="0" cy="14" rx="5" ry="9"/><ellipse cx="-10" cy="10" rx="5" ry="9" transform="rotate(45)"/><ellipse cx="-14" cy="0" rx="9" ry="5"/><ellipse cx="-10" cy="-10" rx="5" ry="9" transform="rotate(135)"/></g>
+      <g fill="#ffe873" opacity=".7"><ellipse cx="0" cy="-12" rx="3" ry="6"/><ellipse cx="12" cy="0" rx="6" ry="3"/><ellipse cx="0" cy="12" rx="3" ry="6"/><ellipse cx="-12" cy="0" rx="6" ry="3"/></g>
+      <circle cx="0" cy="0" r="9" fill="#7a4a1e"/>
+      <circle cx="0" cy="0" r="7" fill="#9a6a2e"/>
+      <g fill="#5a3818"><circle cx="-2" cy="-2" r="1"/><circle cx="2" cy="-1" r="1"/><circle cx="0" cy="2" r="1"/><circle cx="3" cy="2" r="1"/><circle cx="-3" cy="1" r="1"/></g>
+    </g>
+  </svg>`;
+}
+
+/* --- Tulip --- */
+function tulipSVG(s) {
+  if (s === 1) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 58 L40 40" stroke="#5fae3e" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="32" cy="38" rx="6" ry="3.5" fill="#7fd45a" transform="rotate(-35 32 38)"/>
+    <ellipse cx="48" cy="38" rx="6" ry="3.5" fill="#7fd45a" transform="rotate(35 48 38)"/>
+  </svg>`;
+  if (s === 2) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 62 L40 22" stroke="#5fae3e" stroke-width="4.5" stroke-linecap="round"/>
+    <ellipse cx="28" cy="44" rx="9" ry="5" fill="#7fd45a" transform="rotate(-30 28 44)"/>
+    <ellipse cx="52" cy="44" rx="9" ry="5" fill="#7fd45a" transform="rotate(30 52 44)"/>
+    <path d="M34 24 Q40 14 46 24 Q42 20 40 26 Q38 20 34 24 Z" fill="#e8678a"/>
+  </svg>`;
+  // s === 3 mature
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 64 L40 26" stroke="#5fae3e" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="26" cy="50" rx="11" ry="6" fill="#7fd45a" transform="rotate(-30 26 50)"/>
+    <ellipse cx="54" cy="50" rx="11" ry="6" fill="#7fd45a" transform="rotate(30 54 50)"/>
+    <g transform="translate(40 24)">
+      <path d="M-12 4 Q-14 -16 0 -18 Q14 -16 12 4 Q8 -4 0 -2 Q-8 -4 -12 4 Z" fill="#e8678a"/>
+      <path d="M-12 4 Q-14 -16 0 -18 Q-1 -10 -1 4 Q-7 -2 -12 4 Z" fill="#d04a6e"/>
+      <path d="M12 4 Q14 -16 0 -18 Q1 -10 1 4 Q7 -2 12 4 Z" fill="#f4889e"/>
+      <path d="M0 -18 L0 4" stroke="#c43e62" stroke-width="1.5" opacity=".5"/>
+    </g>
+  </svg>`;
+}
+
+/* --- Strawberry --- */
+function strawberrySVG(s) {
+  if (s === 1) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="50" rx="14" ry="6" fill="#5fae3e" opacity=".5"/>
+    <path d="M30 50 L34 38" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <path d="M50 50 L46 38" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="34" cy="38" rx="6" ry="4" fill="#7fd45a" transform="rotate(-30 34 38)"/>
+    <ellipse cx="46" cy="38" rx="6" ry="4" fill="#7fd45a" transform="rotate(30 46 38)"/>
+  </svg>`;
+  if (s === 2) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="52" rx="20" ry="9" fill="#5fae3e" opacity=".5"/>
+    <path d="M22 52 L30 36" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M58 52 L50 36" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="26" cy="40" rx="8" ry="5" fill="#7fd45a" transform="rotate(-35 26 40)"/>
+    <ellipse cx="54" cy="40" rx="8" ry="5" fill="#7fd45a" transform="rotate(35 54 40)"/>
+    <ellipse cx="40" cy="34" rx="7" ry="5" fill="#8fe06a"/>
+    <ellipse cx="40" cy="46" rx="5" ry="4" fill="#9be07a"/>
+  </svg>`;
+  // s === 3 mature
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="56" rx="24" ry="10" fill="#5fae3e" opacity=".5"/>
+    <path d="M18 56 L26 38" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M62 56 L54 38" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="22" cy="42" rx="9" ry="6" fill="#7fd45a" transform="rotate(-35 22 42)"/>
+    <ellipse cx="58" cy="42" rx="9" ry="6" fill="#7fd45a" transform="rotate(35 58 42)"/>
+    <g transform="translate(40 30)">
+      <path d="M-10 -6 L0 -14 L10 -6 L7 -2 L-7 -2 Z" fill="#5fae3e"/>
+      <path d="M0 -14 L0 -2" stroke="#4a8e2e" stroke-width="1"/>
+      <path d="M-8 -2 L0 4 L8 -2" fill="#4a8e2e"/>
+    </g>
+    <g transform="translate(34 44)">
+      <path d="M0 0 Q-7 4 -7 12 Q-7 20 0 20 Q7 20 7 12 Q7 4 0 0 Z" fill="#e8485a"/>
+      <path d="M-7 12 Q-7 4 0 0 Q0 8 0 20 Q-7 20 -7 12 Z" fill="#d63648" opacity=".7"/>
+      <g fill="#ffe89e"><circle cx="-3" cy="8" r="0.9"/><circle cx="2" cy="11" r="0.9"/><circle cx="-2" cy="14" r="0.9"/><circle cx="3" cy="16" r="0.9"/><circle cx="0" cy="6" r="0.9"/></g>
+    </g>
+    <g transform="translate(48 50)">
+      <path d="M0 0 Q-6 3 -6 10 Q-6 17 0 17 Q6 17 6 10 Q6 3 0 0 Z" fill="#e8485a"/>
+      <g fill="#ffe89e"><circle cx="-2" cy="7" r="0.8"/><circle cx="2" cy="10" r="0.8"/><circle cx="-1" cy="13" r="0.8"/></g>
+    </g>
+  </svg>`;
+}
+
+/* --- Carrot --- */
+function carrotSVG(s) {
+  if (s === 1) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 56 L40 44" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40 44 L36 34" stroke="#5fae3e" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M40 44 L44 34" stroke="#5fae3e" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M40 44 L40 32" stroke="#5fae3e" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+  if (s === 2) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 58 L40 40" stroke="#5fae3e" stroke-width="4" stroke-linecap="round"/>
+    <path d="M40 40 L32 22" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40 40 L48 22" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40 40 L40 18" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40 40 L36 24" stroke="#7fd45a" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M40 40 L44 24" stroke="#7fd45a" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+  // s === 3 mature
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="58" rx="22" ry="8" fill="#4a3018" opacity=".4"/>
+    <path d="M40 56 L40 36" stroke="#5fae3e" stroke-width="4" stroke-linecap="round"/>
+    <g stroke="#5fae3e" stroke-width="3" stroke-linecap="round" fill="none">
+      <path d="M40 36 L30 16"/>
+      <path d="M40 36 L50 16"/>
+      <path d="M40 36 L40 12"/>
+      <path d="M40 36 L34 18"/>
+      <path d="M40 36 L46 18"/>
+    </g>
+    <g stroke="#7fd45a" stroke-width="2.5" stroke-linecap="round" fill="none">
+      <path d="M40 40 L28 14"/>
+      <path d="M40 40 L52 14"/>
+    </g>
+    <path d="M34 56 L34 62 Q34 68 40 68 Q46 68 46 62 L46 56 Z" fill="#f0923a"/>
+    <path d="M34 56 L34 62 Q34 68 40 68 Q40 60 40 56 Z" fill="#d97a26" opacity=".6"/>
+    <g stroke="#c96a1e" stroke-width="1" opacity=".6"><path d="M36 58 L36 64"/><path d="M40 58 L40 66"/><path d="M44 58 L44 64"/></g>
+  </svg>`;
+}
+
+/* --- Tomato --- */
+function tomatoSVG(s) {
+  if (s === 1) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="52" rx="13" ry="6" fill="#5fae3e" opacity=".5"/>
+    <path d="M30 52 L34 40" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <path d="M50 52 L46 40" stroke="#5fae3e" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="34" cy="40" rx="6" ry="4" fill="#7fd45a" transform="rotate(-30 34 40)"/>
+    <ellipse cx="46" cy="40" rx="6" ry="4" fill="#7fd45a" transform="rotate(30 46 40)"/>
+  </svg>`;
+  if (s === 2) return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="54" rx="20" ry="9" fill="#5fae3e" opacity=".5"/>
+    <path d="M22 54 L28 36" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M58 54 L52 36" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="24" cy="40" rx="8" ry="5" fill="#7fd45a" transform="rotate(-35 24 40)"/>
+    <ellipse cx="56" cy="40" rx="8" ry="5" fill="#7fd45a" transform="rotate(35 56 40)"/>
+    <ellipse cx="40" cy="34" rx="7" ry="5" fill="#8fe06a"/>
+    <circle cx="38" cy="48" r="4" fill="#9be07a"/>
+    <circle cx="50" cy="50" r="3.5" fill="#9be07a"/>
+  </svg>`;
+  // s === 3 mature
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="58" rx="24" ry="10" fill="#4a3018" opacity=".4"/>
+    <path d="M18 56 L24 38" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M62 56 L56 38" stroke="#5fae3e" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="22" cy="42" rx="9" ry="6" fill="#7fd45a" transform="rotate(-35 22 42)"/>
+    <ellipse cx="58" cy="42" rx="9" ry="6" fill="#7fd45a" transform="rotate(35 58 42)"/>
+    <g transform="translate(34 44)">
+      <circle cx="0" cy="0" r="9" fill="#e8484a"/>
+      <ellipse cx="-3" cy="-3" rx="3" ry="2" fill="#f58080" opacity=".7"/>
+      <path d="M-5 -7 L0 -11 L5 -7 L3 -5 L-3 -5 Z" fill="#5fae3e"/>
+      <path d="M0 -11 L0 -5" stroke="#4a8e2e" stroke-width="1"/>
+    </g>
+    <g transform="translate(50 52)">
+      <circle cx="0" cy="0" r="7" fill="#e8484a"/>
+      <ellipse cx="-2" cy="-2" rx="2.5" ry="1.5" fill="#f58080" opacity=".7"/>
+      <path d="M-4 -5 L0 -8 L4 -5 L2 -4 L-2 -4 Z" fill="#5fae3e"/>
+    </g>
+  </svg>`;
+}
+
+/* ---------- State ---------- */
 let state = {
-  level: 1,
-  streak: 0,
-  totalGrown: 0,
-  garden: [],   // 12 slots {stage, plant}
-  activeSlot: 0,
-  muted: false
+  level: 1, streak: 0, totalGrown: 0,
+  garden: [], activeSlot: 0, muted: false
 };
-let currentQ = null; // {text, answer, choices[]}
+let currentQ = null;
 
-// ---------- Audio (Web Audio API beeps) ----------
+/* ---------- Audio (Web Audio API) ---------- */
 let audioCtx = null;
 function beep(freq, duration, type = "sine", vol = 0.15) {
   if (state.muted) return;
@@ -194,22 +527,19 @@ function beep(freq, duration, type = "sine", vol = 0.15) {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.value = vol;
+    o.type = type; o.frequency.value = freq; g.gain.value = vol;
     o.connect(g); g.connect(audioCtx.destination);
     o.start();
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     o.stop(audioCtx.currentTime + duration);
-  } catch (e) { /* ignore audio errors */ }
+  } catch (e) {}
 }
 function soundCorrect() { beep(880, 0.12, "sine", 0.18); setTimeout(() => beep(1175, 0.15, "sine", 0.18), 110); }
-function soundWrong()   { beep(196, 0.25, "square", 0.12); }
+function soundWrong()   { beep(196, 0.25, "sine", 0.14); }
 function soundLevelUp() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, "triangle", 0.2), i * 120)); }
 
-// ---------- Persistence ----------
-function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-}
+/* ---------- Persistence ---------- */
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -217,34 +547,36 @@ function load() {
       const s = JSON.parse(raw);
       Object.assign(state, s);
       if (typeof state.muted === "undefined") state.muted = false;
+      // normalize legacy emoji-based plant field to type string
+      state.garden.forEach(slot => {
+        if (slot.plant && typeof slot.plant === "string" && PLANT_TYPES.indexOf(slot.plant) === -1) {
+          slot.plant = PLANT_TYPES[Math.floor(Math.random() * PLANT_TYPES.length)];
+        }
+      });
     }
   } catch (e) {}
 }
 
-// ---------- Garden setup ----------
+/* ---------- Garden setup ---------- */
 function newGarden() {
   state.garden = [];
   for (let i = 0; i < NUM_SLOTS; i++) state.garden.push({ stage: 0, plant: null });
   state.activeSlot = 0;
 }
 function nextActiveSlot() {
-  // pick first slot that isn't fully grown
   for (let i = 0; i < NUM_SLOTS; i++) {
     if (state.garden[i].stage < MAX_STAGE) { state.activeSlot = i; return true; }
   }
-  return false; // all grown -> level up
+  return false;
 }
 
-// ---------- Question generation ----------
+/* ---------- Question generation ---------- */
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function makeQuestion() {
   const level = state.level;
-  // 70% multiplication, 30% division
   const isMult = Math.random() < 0.7;
-
-  // Determine allowed multiplier tables per level
   let tables;
   if (level === 1) tables = [2, 5, 10];
   else if (level === 2) tables = [3, 4];
@@ -255,10 +587,8 @@ function makeQuestion() {
   if (isMult) {
     b = pick(tables);
     a = level <= 1 ? randInt(1, 5) : randInt(2, 12);
-    op = "×";
-    answer = a * b;
+    op = "×"; answer = a * b;
   } else {
-    // division — choose divisor based on level
     let divisors;
     if (level === 1) divisors = [2, 5, 10];
     else if (level === 2) divisors = [2, 5];
@@ -266,33 +596,27 @@ function makeQuestion() {
     else divisors = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     b = pick(divisors);
     answer = level <= 2 ? randInt(1, 6) : randInt(2, 12);
-    a = answer * b; // dividend that divides cleanly
-    op = "÷";
+    a = answer * b; op = "÷";
   }
-
   const text = `${a} ${op} ${b}`;
-  const choices = makeChoices(answer);
-  currentQ = { text, answer, choices };
+  currentQ = { text, answer, choices: makeChoices(answer) };
   renderQuestion();
 }
 
 function makeChoices(correct) {
   const set = new Set([correct]);
   const near = [-1, 1, -2, 2, -10, 10];
-  // shuffled near-misses
   const shuffled = near.slice().sort(() => Math.random() - 0.5);
   for (const d of shuffled) {
     const cand = correct + d;
     if (cand > 0 && cand !== correct) set.add(cand);
     if (set.size >= 4) break;
   }
-  // fill any remaining with swapped digits or random
   while (set.size < 4) {
     const swapped = swapDigits(correct);
     if (swapped > 0 && swapped !== correct) set.add(swapped);
     else set.add(correct + randInt(3, 20));
   }
-  // return shuffled array of 4
   return Array.from(set).slice(0, 4).sort(() => Math.random() - 0.5);
 }
 function swapDigits(n) {
@@ -303,31 +627,42 @@ function swapDigits(n) {
   return parseInt(arr.join(""), 10);
 }
 
-// ---------- Rendering ----------
-const gardenEl = document.getElementById("garden");
+/* ---------- Rendering ---------- */
+const gardenPlane = document.getElementById("gardenPlane");
 const answersEl = document.getElementById("answers");
 const questionEl = document.getElementById("question");
 const levelStat = document.getElementById("levelStat");
 const streakStat = document.getElementById("streakStat");
 const grownStat = document.getElementById("grownStat");
 
+/* SVG icons for stats */
+const ICON_LEVEL = `<svg viewBox="0 0 24 24"><path d="M12 22 L12 14" stroke="#5fae3e" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M12 14 C8 10 6 6 10 3 C11 5 12 6 14 5 C14 8 13 11 12 14 Z" fill="#7fd45a" stroke="#5fae3e" stroke-width="1.2"/><ellipse cx="12" cy="20" rx="7" ry="3" fill="#9a6a2e" opacity=".6"/></svg>`;
+const ICON_STREAK = `<svg viewBox="0 0 24 24"><path d="M12 2 C8 6 6 9 8 13 C6 12 5 10 5 10 C4 14 7 18 12 20 C9 16 12 12 14 10 C14 13 16 14 15 17 C18 14 19 9 16 5 C15 7 14 8 13 7 C14 4 13 3 12 2 Z" fill="#ff9f4a" stroke="#f47b1e" stroke-width="1.2"/><path d="M11 9 C9 11 9 14 11 16" fill="none" stroke="#ffd36e" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+const ICON_GROWN = `<svg viewBox="0 0 24 24"><path d="M12 20 L12 12" stroke="#5fae3e" stroke-width="2" fill="none" stroke-linecap="round"/><g fill="#e8678a"><path d="M8 10 Q6 6 10 4 Q12 8 8 10 Z"/><path d="M16 10 Q18 6 14 4 Q12 8 16 10 Z"/><path d="M12 12 Q10 8 12 5 Q14 8 12 12 Z"/></g><ellipse cx="12" cy="20" rx="6" ry="2.5" fill="#9a6a2e" opacity=".6"/></svg>`;
+
+function statIcon(label, icon, val) {
+  return `${icon}<span>${label} ${val}</span>`;
+}
+
 function renderGarden() {
-  gardenEl.innerHTML = "";
+  gardenPlane.innerHTML = "";
   state.garden.forEach((slot, i) => {
     const div = document.createElement("div");
     div.className = "slot" + (i === state.activeSlot ? " active" : "") +
                     (slot.stage >= MAX_STAGE ? " grown" : "");
-    const span = document.createElement("span");
-    span.className = "plant";
-    span.textContent = slot.stage >= MAX_STAGE
-      ? (slot.plant || "🌷")
-      : STAGES[slot.stage];
-    div.appendChild(span);
-    gardenEl.appendChild(div);
+    const plant = document.createElement("div");
+    plant.className = "plant";
+    const type = (slot.stage >= MAX_STAGE && slot.plant) ? slot.plant : "sunflower";
+    plant.innerHTML = plantSVG(type, slot.stage);
+    div.appendChild(plant);
+    const burst = document.createElement("div");
+    burst.className = "burst";
+    div.appendChild(burst);
+    gardenPlane.appendChild(div);
   });
-  levelStat.textContent = `🪴 Level ${state.level}`;
-  streakStat.textContent = `🔥 Streak ${state.streak}`;
-  grownStat.textContent = `🌷 Grown ${state.totalGrown}`;
+  levelStat.innerHTML = statIcon("Level", ICON_LEVEL, state.level);
+  streakStat.innerHTML = statIcon("Streak", ICON_STREAK, state.streak);
+  grownStat.innerHTML = statIcon("Grown", ICON_GROWN, state.totalGrown);
 }
 
 function renderQuestion() {
@@ -343,9 +678,24 @@ function renderQuestion() {
   });
 }
 
-// ---------- Answer handling ----------
+/* sparkle burst at active slot */
+function sparkleBurst(slotEl) {
+  const burst = slotEl.querySelector(".burst");
+  if (!burst) return;
+  burst.innerHTML = "";
+  for (let i = 0; i < 10; i++) {
+    const s = document.createElement("span");
+    const ang = (Math.PI * 2 * i) / 10;
+    const dist = 26 + Math.random() * 16;
+    s.style.setProperty("--bx", Math.cos(ang) * dist + "px");
+    s.style.setProperty("--by", Math.sin(ang) * dist + "px");
+    burst.appendChild(s);
+  }
+  setTimeout(() => { if (burst) burst.innerHTML = ""; }, 700);
+}
+
+/* ---------- Answer handling ---------- */
 function handleAnswer(choice, btn) {
-  // disable all buttons so you can't double-tap
   Array.from(answersEl.children).forEach(b => b.disabled = true);
   const correct = choice === currentQ.answer;
 
@@ -355,17 +705,17 @@ function handleAnswer(choice, btn) {
     soundCorrect();
     state.streak++;
     advancePlant();
+    const activeEl = gardenPlane.children[state.activeSlot];
+    sparkleBurst(activeEl);
   } else {
     btn.classList.add("wrong");
     questionEl.classList.add("flash-bad");
     soundWrong();
     state.streak = 0;
-    // briefly show the correct answer highlighted
     Array.from(answersEl.children).forEach(b => {
       if (parseInt(b.textContent, 10) === currentQ.answer) b.classList.add("correct");
     });
-    // wilt the active plant briefly
-    const activeEl = gardenEl.children[state.activeSlot];
+    const activeEl = gardenPlane.children[state.activeSlot];
     if (activeEl) activeEl.classList.add("wilt");
     setTimeout(() => activeEl && activeEl.classList.remove("wilt"), 600);
   }
@@ -373,10 +723,8 @@ function handleAnswer(choice, btn) {
   save();
   renderGarden();
 
-  // After a short pause, generate next question (or level up)
   setTimeout(() => {
     if (!nextActiveSlot()) {
-      // all grown -> level up
       levelUp();
     } else {
       renderGarden();
@@ -389,62 +737,98 @@ function advancePlant() {
   const slot = state.garden[state.activeSlot];
   slot.stage++;
   if (slot.stage >= MAX_STAGE) {
-    slot.plant = pick(PLANTS);
+    slot.plant = pick(PLANT_TYPES);
     state.totalGrown++;
-    // pop animation on grown
     setTimeout(() => {
-      const el = gardenEl.children[state.activeSlot];
+      const el = gardenPlane.children[state.activeSlot];
       if (el) el.classList.add("pop");
-      setTimeout(() => el && el.classList.remove("pop"), 400);
+      setTimeout(() => el && el.classList.remove("pop"), 500);
     }, 50);
   }
 }
 
-// ---------- Level up ----------
+/* ---------- Level up ---------- */
 const banner = document.getElementById("banner");
 function levelUp() {
   state.level++;
   soundLevelUp();
   newGarden();
   save();
-  document.getElementById("bannerTitle").textContent = `Level ${state.level}! 🎉`;
+  const box = banner.querySelector(".banner-box");
+  document.getElementById("bannerTitle").textContent = "Level " + state.level + "!";
   document.getElementById("bannerSub").textContent = "New garden, harder problems!";
-  banner.style.display = "flex";
+  // add rings + sparks
+  box.querySelectorAll(".banner-ring, .banner-spark").forEach(n => n.remove());
+  for (let r = 0; r < 2; r++) {
+    const ring = document.createElement("div");
+    ring.className = "banner-ring";
+    ring.style.animationDelay = (r * 0.18) + "s";
+    box.appendChild(ring);
+  }
+  for (let i = 0; i < 16; i++) {
+    const sp = document.createElement("div");
+    sp.className = "banner-spark";
+    const ang = (Math.PI * 2 * i) / 16;
+    const dist = 120 + Math.random() * 60;
+    sp.style.setProperty("--sx", Math.cos(ang) * dist + "px");
+    sp.style.setProperty("--sy", Math.sin(ang) * dist + "px");
+    sp.style.animationDelay = (Math.random() * 0.2) + "s";
+    box.appendChild(sp);
+  }
+  banner.classList.add("show");
   renderGarden();
-  // pause question generation until banner dismissed
   setTimeout(() => {
-    banner.style.display = "none";
+    banner.classList.remove("show");
     makeQuestion();
   }, 1800);
 }
 
-// ---------- Cut Garden button ----------
+/* ---------- Cut Garden button ---------- */
 document.getElementById("cutBtn").addEventListener("click", () => {
-  // confirm is fine for a tap; keep it light with no browser dialog (kids)
   newGarden();
-  if (!nextActiveSlot()) nextActiveSlot();
+  if (!nextActiveSlot()) state.activeSlot = 0;
   save();
   renderGarden();
   makeQuestion();
 });
 
-// ---------- Mute button ----------
+/* ---------- Mute button ---------- */
 const muteBtn = document.getElementById("muteBtn");
-muteBtn.textContent = state.muted ? "🔇" : "🔊";
-muteBtn.addEventListener("click", () => {
-  state.muted = !state.muted;
-  muteBtn.textContent = state.muted ? "🔇" : "🔊";
-  save();
-});
+const SPEAKER_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="#7a5e9c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9 L4 15 L8 15 L13 19 L13 5 L8 9 Z" fill="rgba(255,255,255,.4)"/><path d="M16 8 Q19 12 16 16"/><path d="M18.5 5 Q23 12 18.5 19"/></svg>`;
+const SPEAKER_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="#7a5e9c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9 L4 15 L8 15 L13 19 L13 5 L8 9 Z" fill="rgba(255,255,255,.4)"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></svg>`;
+function updateMuteBtn() { muteBtn.innerHTML = state.muted ? SPEAKER_OFF : SPEAKER_ON; }
+muteBtn.addEventListener("click", () => { state.muted = !state.muted; updateMuteBtn(); save(); });
 
-// ---------- Init ----------
+/* ---------- Particles ---------- */
+function spawnParticles() {
+  const wrap = document.getElementById("particles");
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement("div");
+    p.className = Math.random() < 0.5 ? "spark" : "petal";
+    p.style.left = Math.random() * 100 + "vw";
+    p.style.top = (90 + Math.random() * 20) + "vh";
+    p.style.setProperty("--dx", (Math.random() * 120 - 60) + "px");
+    const dur = 10 + Math.random() * 10;
+    p.style.animationDuration = dur + "s";
+    p.style.animationDelay = (-Math.random() * dur) + "s";
+    if (p.className === "petal") {
+      const colors = [["#ffd0e0","#ff9bbf"],["#ffe9b0","#ffd36e"],["#d9c2ff","#b59cff"],["#c2e9ff","#9bd0ff"]];
+      const c = colors[Math.floor(Math.random()*colors.length)];
+      p.style.background = `linear-gradient(135deg, ${c[0]}, ${c[1]})`;
+    }
+    wrap.appendChild(p);
+  }
+}
+
+/* ---------- Init ---------- */
 function init() {
   load();
   if (!state.garden || state.garden.length !== NUM_SLOTS) newGarden();
   if (typeof state.activeSlot !== "number" || state.activeSlot < 0 || state.activeSlot >= NUM_SLOTS) {
     if (!nextActiveSlot()) state.activeSlot = 0;
   }
-  muteBtn.textContent = state.muted ? "🔇" : "🔊";
+  updateMuteBtn();
+  spawnParticles();
   renderGarden();
   makeQuestion();
 }
