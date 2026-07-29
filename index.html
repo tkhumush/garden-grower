@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Garden Grower 🌻</title>
+<style>
+  /* ---------- Theme & resets ---------- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sky: #bde0fe;
+    --grass: #a7e8a3;
+    --soil: #c08552;
+    --panel: #fff8e7;
+    --accent: #ff9f1c;
+    --good: #2ec4b6;
+    --bad: #e63946;
+    --text: #2b2d42;
+  }
+  html, body { height: 100%; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; color: var(--text); }
+  body {
+    background: linear-gradient(180deg, var(--sky) 0%, #d8f3ff 35%, var(--grass) 65%, #8fd982 100%);
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- Layout ---------- */
+  #app { display: flex; flex-direction: column; height: 100%; padding: 10px; gap: 10px; }
+
+  /* Top bar */
+  #topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel); border-radius: 18px; padding: 10px 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+    flex-shrink: 0;
+  }
+  #title { font-size: 1.6rem; font-weight: 800; }
+  .stat {
+    background: white; border-radius: 14px; padding: 6px 14px; font-weight: 700;
+    display: flex; align-items: center; gap: 6px; min-height: 44px;
+  }
+  #stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  #muteBtn { font-size: 1.4rem; background: white; border: none; border-radius: 14px; padding: 6px 12px; min-height: 44px; cursor: pointer; }
+
+  /* Main area: garden + question */
+  #main { display: flex; flex: 1; gap: 12px; min-height: 0; }
+
+  /* Garden */
+  #gardenWrap {
+    flex: 0 0 58%; background: rgba(255,255,255,0.45); border-radius: 22px; padding: 12px;
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.6);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  #garden {
+    flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr);
+    gap: 10px; min-height: 0;
+  }
+  .slot {
+    background: var(--soil); border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: clamp(2rem, 6vw, 3.5rem); transition: transform .3s, box-shadow .3s, background .3s;
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,0.18), inset 0 4px 0 rgba(255,255,255,0.25);
+    position: relative; overflow: hidden;
+  }
+  .slot .plant { display: inline-block; transition: transform .35s cubic-bezier(.34,1.56,.64,1); }
+  .slot.active {
+    box-shadow: inset 0 0 0 5px var(--accent), inset 0 -6px 0 rgba(0,0,0,0.18);
+    transform: scale(1.03);
+  }
+  .slot.grown { background: #9bcf6b; }
+  .slot.wilt { animation: wilt .6s ease; }
+  @keyframes wilt { 0%{transform:scale(1)} 30%{transform:scale(.85) rotate(-8deg)} 100%{transform:scale(1)} }
+  .slot.pop .plant { animation: pop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pop { 0%{transform:scale(.4)} 100%{transform:scale(1)} }
+
+  /* Cut button */
+  #cutBtn {
+    flex-shrink: 0; align-self: flex-end; font-size: 1.2rem; font-weight: 800;
+    background: var(--accent); color: white; border: none; border-radius: 16px;
+    padding: 12px 20px; min-height: 56px; cursor: pointer; box-shadow: 0 4px 0 #c77a00;
+  }
+  #cutBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #c77a00; }
+
+  /* Question panel */
+  #panel {
+    flex: 1; background: var(--panel); border-radius: 22px; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+    min-height: 0;
+  }
+  #question {
+    text-align: center; font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800;
+    background: white; border-radius: 18px; padding: 14px; min-height: 90px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 0 0 3px #ffe08a;
+    transition: transform .3s, background .3s;
+  }
+  #question.flash-good { background: #d6f5e8; }
+  #question.flash-bad  { background: #fcd7d7; animation: shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  #answers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; min-height: 0; }
+  .answer {
+    font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; color: white; border: none;
+    border-radius: 18px; min-height: 64px; cursor: pointer;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.18); transition: transform .1s, box-shadow .1s, background .3s;
+  }
+  .answer:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.18); }
+  .answer:nth-child(1){background:#ef476f}.answer:nth-child(2){background:#118ab2}
+  .answer:nth-child(3){background:#06d6a0}.answer:nth-child(4){background:#ffd166}
+  .answer.correct { background: var(--good) !important; }
+  .answer.wrong   { background: var(--bad) !important; }
+  .answer:disabled { opacity: .55; }
+
+  /* Banner for level up */
+  #banner {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.35); z-index: 50;
+  }
+  #banner .box {
+    background: var(--panel); border-radius: 24px; padding: 30px 40px; text-align: center;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.15); animation: pop .5s;
+  }
+  #banner h2 { font-size: 2.4rem; }
+  #banner p { font-size: 1.4rem; margin-top: 8px; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 700px) {
+    #main { flex-direction: column; }
+    #gardenWrap { flex: 0 0 auto; height: 42%; }
+    #panel { flex: 1; }
+    #garden { grid-template-rows: repeat(3, 1fr); }
+    #title { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Top bar: title + stats + mute -->
+  <div id="topbar">
+    <div id="title">🌻 Garden Grower</div>
+    <div id="stats">
+      <div class="stat" id="levelStat">🪴 Level 1</div>
+      <div class="stat" id="streakStat">🔥 Streak 0</div>
+      <div class="stat" id="grownStat">🌷 Grown 0</div>
+    </div>
+    <button id="muteBtn" title="Mute">🔊</button>
+  </div>
+
+  <!-- Main: garden + question panel -->
+  <div id="main">
+    <div id="gardenWrap">
+      <div id="garden"></div>
+      <button id="cutBtn">✂️ Cut Garden</button>
+    </div>
+
+    <div id="panel">
+      <div id="question">?</div>
+      <div id="answers"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Level-up banner -->
+<div id="banner"><div class="box"><h2 id="bannerTitle">Level Up! 🎉</h2><p id="bannerSub">New garden, harder problems!</p></div></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Garden Grower — single-file math game
+   ============================================================ */
+
+const STORAGE_KEY = "gardenGrower";
+const NUM_SLOTS = 12;
+const STAGES = ["🟫", "🌱", "🌿", null]; // index 3 = fully grown plant (random)
+const PLANTS = ["🌷", "🍅", "🌻", "🍓", "🥕", "🌽", "🍆", "🫐", "🍉"];
+const MAX_STAGE = 3; // stage 0..2 growing, 3 = grown
+
+// ---------- State ----------
+let state = {
+  level: 1,
+  streak: 0,
+  totalGrown: 0,
+  garden: [],   // 12 slots {stage, plant}
+  activeSlot: 0,
+  muted: false
+};
+let currentQ = null; // {text, answer, choices[]}
+
+// ---------- Audio (Web Audio API beeps) ----------
+let audioCtx = null;
+function beep(freq, duration, type = "sine", vol = 0.15) {
+  if (state.muted) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = vol;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    o.stop(audioCtx.currentTime + duration);
+  } catch (e) { /* ignore audio errors */ }
+}
+function soundCorrect() { beep(880, 0.12, "sine", 0.18); setTimeout(() => beep(1175, 0.15, "sine", 0.18), 110); }
+function soundWrong()   { beep(196, 0.25, "square", 0.12); }
+function soundLevelUp() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, "triangle", 0.2), i * 120)); }
+
+// ---------- Persistence ----------
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      Object.assign(state, s);
+      if (typeof state.muted === "undefined") state.muted = false;
+    }
+  } catch (e) {}
+}
+
+// ---------- Garden setup ----------
+function newGarden() {
+  state.garden = [];
+  for (let i = 0; i < NUM_SLOTS; i++) state.garden.push({ stage: 0, plant: null });
+  state.activeSlot = 0;
+}
+function nextActiveSlot() {
+  // pick first slot that isn't fully grown
+  for (let i = 0; i < NUM_SLOTS; i++) {
+    if (state.garden[i].stage < MAX_STAGE) { state.activeSlot = i; return true; }
+  }
+  return false; // all grown -> level up
+}
+
+// ---------- Question generation ----------
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function makeQuestion() {
+  const level = state.level;
+  // 70% multiplication, 30% division
+  const isMult = Math.random() < 0.7;
+
+  // Determine allowed multiplier tables per level
+  let tables;
+  if (level === 1) tables = [2, 5, 10];
+  else if (level === 2) tables = [3, 4];
+  else if (level === 3) tables = [6, 7, 8, 9];
+  else tables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  let a, b, op, answer;
+  if (isMult) {
+    b = pick(tables);
+    a = level <= 1 ? randInt(1, 5) : randInt(2, 12);
+    op = "×";
+    answer = a * b;
+  } else {
+    // division — choose divisor based on level
+    let divisors;
+    if (level === 1) divisors = [2, 5, 10];
+    else if (level === 2) divisors = [2, 5];
+    else if (level === 3) divisors = [3, 4, 6, 7, 8, 9];
+    else divisors = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    b = pick(divisors);
+    answer = level <= 2 ? randInt(1, 6) : randInt(2, 12);
+    a = answer * b; // dividend that divides cleanly
+    op = "÷";
+  }
+
+  const text = `${a} ${op} ${b}`;
+  const choices = makeChoices(answer);
+  currentQ = { text, answer, choices };
+  renderQuestion();
+}
+
+function makeChoices(correct) {
+  const set = new Set([correct]);
+  const near = [-1, 1, -2, 2, -10, 10];
+  // shuffled near-misses
+  const shuffled = near.slice().sort(() => Math.random() - 0.5);
+  for (const d of shuffled) {
+    const cand = correct + d;
+    if (cand > 0 && cand !== correct) set.add(cand);
+    if (set.size >= 4) break;
+  }
+  // fill any remaining with swapped digits or random
+  while (set.size < 4) {
+    const swapped = swapDigits(correct);
+    if (swapped > 0 && swapped !== correct) set.add(swapped);
+    else set.add(correct + randInt(3, 20));
+  }
+  // return shuffled array of 4
+  return Array.from(set).slice(0, 4).sort(() => Math.random() - 0.5);
+}
+function swapDigits(n) {
+  const s = String(n);
+  if (s.length < 2) return n;
+  const arr = s.split("");
+  [arr[0], arr[1]] = [arr[1], arr[0]];
+  return parseInt(arr.join(""), 10);
+}
+
+// ---------- Rendering ----------
+const gardenEl = document.getElementById("garden");
+const answersEl = document.getElementById("answers");
+const questionEl = document.getElementById("question");
+const levelStat = document.getElementById("levelStat");
+const streakStat = document.getElementById("streakStat");
+const grownStat = document.getElementById("grownStat");
+
+function renderGarden() {
+  gardenEl.innerHTML = "";
+  state.garden.forEach((slot, i) => {
+    const div = document.createElement("div");
+    div.className = "slot" + (i === state.activeSlot ? " active" : "") +
+                    (slot.stage >= MAX_STAGE ? " grown" : "");
+    const span = document.createElement("span");
+    span.className = "plant";
+    span.textContent = slot.stage >= MAX_STAGE
+      ? (slot.plant || "🌷")
+      : STAGES[slot.stage];
+    div.appendChild(span);
+    gardenEl.appendChild(div);
+  });
+  levelStat.textContent = `🪴 Level ${state.level}`;
+  streakStat.textContent = `🔥 Streak ${state.streak}`;
+  grownStat.textContent = `🌷 Grown ${state.totalGrown}`;
+}
+
+function renderQuestion() {
+  questionEl.textContent = currentQ.text + " = ?";
+  questionEl.classList.remove("flash-good", "flash-bad");
+  answersEl.innerHTML = "";
+  currentQ.choices.forEach(c => {
+    const btn = document.createElement("button");
+    btn.className = "answer";
+    btn.textContent = c;
+    btn.addEventListener("click", () => handleAnswer(c, btn));
+    answersEl.appendChild(btn);
+  });
+}
+
+// ---------- Answer handling ----------
+function handleAnswer(choice, btn) {
+  // disable all buttons so you can't double-tap
+  Array.from(answersEl.children).forEach(b => b.disabled = true);
+  const correct = choice === currentQ.answer;
+
+  if (correct) {
+    btn.classList.add("correct");
+    questionEl.classList.add("flash-good");
+    soundCorrect();
+    state.streak++;
+    advancePlant();
+  } else {
+    btn.classList.add("wrong");
+    questionEl.classList.add("flash-bad");
+    soundWrong();
+    state.streak = 0;
+    // briefly show the correct answer highlighted
+    Array.from(answersEl.children).forEach(b => {
+      if (parseInt(b.textContent, 10) === currentQ.answer) b.classList.add("correct");
+    });
+    // wilt the active plant briefly
+    const activeEl = gardenEl.children[state.activeSlot];
+    if (activeEl) activeEl.classList.add("wilt");
+    setTimeout(() => activeEl && activeEl.classList.remove("wilt"), 600);
+  }
+
+  save();
+  renderGarden();
+
+  // After a short pause, generate next question (or level up)
+  setTimeout(() => {
+    if (!nextActiveSlot()) {
+      // all grown -> level up
+      levelUp();
+    } else {
+      renderGarden();
+      makeQuestion();
+    }
+  }, correct ? 700 : 1100);
+}
+
+function advancePlant() {
+  const slot = state.garden[state.activeSlot];
+  slot.stage++;
+  if (slot.stage >= MAX_STAGE) {
+    slot.plant = pick(PLANTS);
+    state.totalGrown++;
+    // pop animation on grown
+    setTimeout(() => {
+      const el = gardenEl.children[state.activeSlot];
+      if (el) el.classList.add("pop");
+      setTimeout(() => el && el.classList.remove("pop"), 400);
+    }, 50);
+  }
+}
+
+// ---------- Level up ----------
+const banner = document.getElementById("banner");
+function levelUp() {
+  state.level++;
+  soundLevelUp();
+  newGarden();
+  save();
+  document.getElementById("bannerTitle").textContent = `Level ${state.level}! 🎉`;
+  document.getElementById("bannerSub").textContent = "New garden, harder problems!";
+  banner.style.display = "flex";
+  renderGarden();
+  // pause question generation until banner dismissed
+  setTimeout(() => {
+    banner.style.display = "none";
+    makeQuestion();
+  }, 1800);
+}
+
+// ---------- Cut Garden button ----------
+document.getElementById("cutBtn").addEventListener("click", () => {
+  // confirm is fine for a tap; keep it light with no browser dialog (kids)
+  newGarden();
+  if (!nextActiveSlot()) nextActiveSlot();
+  save();
+  renderGarden();
+  makeQuestion();
+});
+
+// ---------- Mute button ----------
+const muteBtn = document.getElementById("muteBtn");
+muteBtn.textContent = state.muted ? "🔇" : "🔊";
+muteBtn.addEventListener("click", () => {
+  state.muted = !state.muted;
+  muteBtn.textContent = state.muted ? "🔇" : "🔊";
+  save();
+});
+
+// ---------- Init ----------
+function init() {
+  load();
+  if (!state.garden || state.garden.length !== NUM_SLOTS) newGarden();
+  if (typeof state.activeSlot !== "number" || state.activeSlot < 0 || state.activeSlot >= NUM_SLOTS) {
+    if (!nextActiveSlot()) state.activeSlot = 0;
+  }
+  muteBtn.textContent = state.muted ? "🔇" : "🔊";
+  renderGarden();
+  makeQuestion();
+}
+init();
+</script>
+</body>
+</html>
